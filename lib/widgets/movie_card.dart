@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart'; // Import go_router
 import '../models/movie_model.dart';
 
 class MovieCard extends StatelessWidget {
@@ -35,7 +36,7 @@ class MovieCard extends StatelessWidget {
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // Navigate to movie details screen (if implemented)
+          context.push('/movie-detail/${movie.id}'); // Correct navigation
         },
       ),
     );

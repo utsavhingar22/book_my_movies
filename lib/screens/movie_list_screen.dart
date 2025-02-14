@@ -1,8 +1,5 @@
-// ignore_for_file: library_private_types_in_public_api
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/movie_provider.dart';
 import '../widgets/movie_card.dart';
 
@@ -10,7 +7,7 @@ class MovieListScreen extends ConsumerStatefulWidget {
   const MovieListScreen({super.key});
 
   @override
-  _MovieListScreenState createState() => _MovieListScreenState();
+  ConsumerState<MovieListScreen> createState() => _MovieListScreenState();
 }
 
 class _MovieListScreenState extends ConsumerState<MovieListScreen> {
@@ -20,10 +17,15 @@ class _MovieListScreenState extends ConsumerState<MovieListScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Initial fetch (you might want to move this elsewhere if needed)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(movieProvider.notifier).fetchMovies();
+    });
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       ref.read(movieProvider.notifier).fetchMovies();
     }
   }
@@ -39,23 +41,27 @@ class _MovieListScreenState extends ConsumerState<MovieListScreen> {
           controller: _scrollController,
           itemCount: movies.length,
           itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                if (kDebugMode) {
-                  print("🔥 Movie Clicked: ${movies[index].title}");
-                } // Debugging log
-                final movieId = movies[index].id;
-                if (kDebugMode) {
-                  print('Navigating to: /movie-detail/$movieId');
-                } // Debugging log
-                context.push('/movie-detail/$movieId');
-              },
-              child: MovieCard(movie: movies[index]),
-            );
+            return MovieCard(movie: movies[index]); // No need for GestureDetector here
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) {
+          // Improved error handling
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Error: $err'),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(movieProvider.notifier).fetchMovies(); // Retry
+                  },
+                  child: const Text("Retry"),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
